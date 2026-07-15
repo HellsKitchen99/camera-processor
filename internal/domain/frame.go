@@ -9,7 +9,7 @@ type Frame struct {
 }
 
 type FrameJob struct {
-	CameraId   int
+	CameraID   int
 	Image      image.Image
-	RecievedAt time.Time
+	ReceivedAt time.Time
 }
