@@ -11,6 +11,10 @@ import (
 type Annotator struct {
 }
 
+func NewAnnotator() *Annotator {
+	return &Annotator{}
+}
+
 func (a *Annotator) VisualizeDetections(img image.Image, detections []domain.Detection) *image.RGBA {
 	bounds := img.Bounds()
 	result := image.NewRGBA(bounds)
