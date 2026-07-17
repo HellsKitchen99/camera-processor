@@ -200,7 +200,7 @@ func readCamera(cameraId int, cameraUrl string, jobs chan<- domain.FrameJob, ctx
 			ReceivedAt: time.Now(),
 		}:
 			// successful sending
-			//logrus.Infof("CAMERA %v: sent frame successfully", cameraId)
+			logrus.Infof("CAMERA %v: sent frame successfully", cameraId)
 
 		default:
 			// jobs is full

@@ -1,7 +1,6 @@
 package workerpool
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -64,7 +63,7 @@ func (w *WorkerPool) worker(workerId int) {
 		if lastSave.Add(time.Second).After(time.Now()) {
 			continue
 		}
-		for _, detection := range detections {
+		/*for _, detection := range detections {
 			fmt.Printf(
 				"worker=%d camera=%d cow confidence=%.2f box=(%.0f %.0f %.0f %.0f)\n",
 				workerId,
@@ -75,11 +74,14 @@ func (w *WorkerPool) worker(workerId int) {
 				detection.X2,
 				detection.Y2,
 			)
-		}
+		}*/
 		finalImage := w.annotator.VisualizeDetections(job.Image, detections)
 		if err := w.imageWriter.SaveImage(finalImage, job.CameraID); err != nil {
 			logrus.Errorf("CAMERA %v WORKER %v: %v\n", job.CameraID, workerId, err)
 		}
 		lastSave = time.Now()
+
+		// successfull log
+		logrus.Infof("CAMERA %v WORKER %v: recieved frame successfully", job.CameraID, workerId)
 	}
 }
