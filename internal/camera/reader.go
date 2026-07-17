@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/HellsKitchen99/camera-processor/internal/domain"
@@ -19,14 +20,16 @@ import (
 type CameraReader struct {
 	CamerasUrl []domain.Camera
 	Jobs       chan<- domain.FrameJob
+	wg         *sync.WaitGroup
 
 	ctx context.Context
 }
 
-func NewCameraReader(camerasUrl []domain.Camera, jobs chan<- domain.FrameJob, ctx context.Context) *CameraReader {
+func NewCameraReader(camerasUrl []domain.Camera, jobs chan<- domain.FrameJob, ctx context.Context, wg *sync.WaitGroup) *CameraReader {
 	return &CameraReader{
 		CamerasUrl: camerasUrl,
 		Jobs:       jobs,
+		wg:         wg,
 
 		ctx: ctx,
 	}
@@ -34,7 +37,9 @@ func NewCameraReader(camerasUrl []domain.Camera, jobs chan<- domain.FrameJob, ct
 
 func (c *CameraReader) Run() {
 	for i := 0; i < len(c.CamerasUrl); i++ {
+		c.wg.Add(1)
 		go func(cameraId int, cameraUrl string) {
+			defer c.wg.Done()
 			c.reader(cameraId, cameraUrl)
 		}(c.CamerasUrl[i].ID, c.CamerasUrl[i].URL)
 	}
