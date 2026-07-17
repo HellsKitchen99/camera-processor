@@ -3,6 +3,7 @@ package workerpool
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/HellsKitchen99/camera-processor/internal/detector"
 	"github.com/HellsKitchen99/camera-processor/internal/domain"
@@ -48,6 +49,8 @@ func (w *WorkerPool) worker(workerId int) {
 		return
 	}
 	defer yoloDetector.Close()
+
+	lastSave := time.Time{}
 	for job := range w.Jobs {
 		image := job.Image
 		detections, err := yoloDetector.DetectCow(image)
@@ -56,6 +59,9 @@ func (w *WorkerPool) worker(workerId int) {
 			continue
 		}
 		if len(detections) == 0 {
+			continue
+		}
+		if lastSave.Add(time.Second).After(time.Now()) {
 			continue
 		}
 		for _, detection := range detections {
@@ -74,5 +80,7 @@ func (w *WorkerPool) worker(workerId int) {
 		if err := w.imageWriter.SaveImage(finalImage, job.CameraID); err != nil {
 			logrus.Errorf("CAMERA %v WORKER %v: %v\n", job.CameraID, workerId, err)
 		}
+
+		lastSave = time.Now()
 	}
 }
