@@ -145,6 +145,8 @@ func readCamera(cameraId int, cameraUrl string, jobs chan<- domain.FrameJob, ctx
 		return err
 	}
 
+	lastSent := time.Time{}
+
 	// handle rtp stream
 	firstRandomAccess := false
 	client.OnPacketRTP(media, h264Format, func(p *rtp.Packet) {
@@ -184,6 +186,12 @@ func readCamera(cameraId int, cameraUrl string, jobs chan<- domain.FrameJob, ctx
 
 		// sucessful log
 		//logrus.Infof("CAMERA %v: Decode frame with size %v and timing\n", cameraId, image.Bounds().Max, pts)
+
+		if lastSent.Add(time.Second).After(time.Now()) {
+			return
+		}
+
+		lastSent = time.Now()
 
 		select {
 		case jobs <- domain.FrameJob{
