@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/HellsKitchen99/camera-processor/internal/domain"
@@ -26,4 +27,35 @@ func LoadCamerasUrl() ([]domain.Camera, error) {
 		}
 	}
 	return cameras, nil
+}
+
+func LoadModelPath() string {
+	modelPath := os.Getenv("MODEL_PATH")
+	return modelPath
+}
+
+func LoadImagePath() string {
+	imagePath := os.Getenv("IMAGE_PATH")
+	return imagePath
+}
+
+func LoadWorkersAmount() int {
+	workersAmount, err := strconv.Atoi(os.Getenv("WORKERS_AMOUNT"))
+	if err != nil {
+		workersAmount = 1
+	}
+	return workersAmount
+}
+
+func LoadJobsQueueSize() int {
+	jobsQueueSize, err := strconv.Atoi(os.Getenv("JOBS_QUEUE_SIZE"))
+	if err != nil {
+		jobsQueueSize = 100
+	}
+	return jobsQueueSize
+}
+
+func LoadLibPath() string {
+	libPath := os.Getenv("ONNXRUNTIME_LIB_PATH")
+	return libPath
 }
