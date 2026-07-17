@@ -16,6 +16,9 @@ type WorkerPool struct {
 	wg          *sync.WaitGroup
 	modelPath   string
 
+	saveMu      sync.Mutex
+	lastProceed time.Time
+
 	Workers int
 	Jobs    <-chan domain.FrameJob
 }
@@ -26,6 +29,9 @@ func NewWorkerPool(modelPath string, annotator Annotator, imageWriter ImageWrite
 		imageWriter: imageWriter,
 		wg:          wg,
 		modelPath:   modelPath,
+
+		saveMu:      sync.Mutex{},
+		lastProceed: time.Time{},
 
 		Workers: workers,
 		Jobs:    jobs,
@@ -50,8 +56,10 @@ func (w *WorkerPool) worker(workerId int) {
 	}
 	defer yoloDetector.Close()
 
-	lastSave := time.Time{}
 	for job := range w.Jobs {
+		if !w.canSave() {
+			continue
+		}
 		image := job.Image
 		detections, err := yoloDetector.DetectCow(image)
 		if err != nil {
@@ -59,9 +67,6 @@ func (w *WorkerPool) worker(workerId int) {
 			continue
 		}
 		if len(detections) == 0 {
-			continue
-		}
-		if lastSave.Add(time.Second).After(time.Now()) {
 			continue
 		}
 		for _, detection := range detections {
@@ -80,7 +85,15 @@ func (w *WorkerPool) worker(workerId int) {
 		if err := w.imageWriter.SaveImage(finalImage, job.CameraID); err != nil {
 			logrus.Errorf("CAMERA %v WORKER %v: %v\n", job.CameraID, workerId, err)
 		}
-
-		lastSave = time.Now()
 	}
+}
+
+func (w *WorkerPool) canSave() bool {
+	w.saveMu.Lock()
+	defer w.saveMu.Unlock()
+	if w.lastProceed.Add(time.Second).After(time.Now()) {
+		return false
+	}
+	w.lastProceed = time.Now()
+	return true
 }
